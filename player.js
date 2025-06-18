@@ -125,12 +125,16 @@ document.addEventListener('DOMContentLoaded', () => {
  const repeatBtn = document.getElementById('repeat');
  const shuffleBtn = document.getElementById('shuffle');
  const playlistEl = document.getElementById('playlist');
- const currentTitleEl = document.getElementById('current-title'); // 추가: 현재 곡 제목 요소를 가져옵니다.
+ const currentTitleEl = document.getElementById('current-title'); // 현재 곡 제목 요소를 가져옵니다.
+
+ // 초기 로드 시 "재생 중인 곡 없음" 유지
+ currentTitleEl.textContent = "재생 중인 곡 없음";
+
 
  function load(index) {
   const song = playlist[index];
   audio.src = song.url;
-  currentTitleEl.textContent = song.title; // 추가: 현재 곡 제목 업데이트
+  currentTitleEl.textContent = song.title; // 현재 곡 제목 업데이트
   document.querySelectorAll('.playlist li').forEach(li => li.classList.remove('active'));
   if (playlistEl.children[index]) {
     playlistEl.children[index].classList.add('active');
@@ -148,8 +152,16 @@ document.addEventListener('DOMContentLoaded', () => {
  }
 
  playBtn.onclick = () => {
-  if (audio.paused) play();
-  else pause();
+  if (audio.paused) {
+    // 만약 초기 상태에서 재생 버튼을 누르면 첫 곡을 로드하고 재생
+    if (audio.src === "" || audio.src === window.location.href) { // src가 비었거나 현재 페이지 URL일 경우
+      load(current);
+    }
+    play();
+  }
+  else {
+    pause();
+  }
  };
 
  nextBtn.onclick = () => {
@@ -189,9 +201,9 @@ document.addEventListener('DOMContentLoaded', () => {
     load(current);
     play();
   }
-  else { // No repeat, last song ended
+  else { // No repeat, last song ended - 제목을 그대로 유지
     pause();
-    currentTitleEl.textContent = "재생 중인 곡 없음"; // 추가: 재생이 끝나면 기본 텍스트로 돌아감
+    // currentTitleEl.textContent는 변경하지 않습니다. (이전 곡 제목 유지)
   }
  };
 
@@ -206,7 +218,7 @@ document.addEventListener('DOMContentLoaded', () => {
   playlistEl.appendChild(li);
  });
 
- // 모든 li 요소가 playlistEl에 추가된 후, 첫 곡을 로드합니다.
- load(current);
+ // 초기 로드 시 첫 곡을 로드하지 않고, "재생 중인 곡 없음"을 유지
+ // load(current); // 이 줄을 제거하거나 주석 처리합니다.
 
 }); // DOMContentLoaded 닫는 부분
