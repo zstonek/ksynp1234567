@@ -127,7 +127,7 @@ document.addEventListener('DOMContentLoaded', () => {
  const playlistEl = document.getElementById('playlist');
  const currentTitleEl = document.getElementById('current-title'); // 현재 곡 제목 요소를 가져옵니다.
 
- // 초기 로드 시 "재생 중인 곡 없음" 유지
+ // 초기 로드 시 "재생 중인 곡 없음"을 설정합니다.
  currentTitleEl.textContent = "재생 중인 곡 없음";
 
 
@@ -144,6 +144,13 @@ document.addEventListener('DOMContentLoaded', () => {
  function play() {
   audio.play();
   playBtn.textContent = '⏸️';
+  // 재생 시작 시 현재 곡 제목으로 업데이트 (선택 버튼을 눌러 재생할 때)
+  if (audio.src) { // audio.src가 비어있지 않다면 (즉, 곡이 로드되었다면)
+      const currentSongIndex = playlist.findIndex(song => audio.src.includes(song.url));
+      if (currentSongIndex !== -1) {
+          currentTitleEl.textContent = playlist[currentSongIndex].title;
+      }
+  }
  }
 
  function pause() {
@@ -153,9 +160,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
  playBtn.onclick = () => {
   if (audio.paused) {
-    // 만약 초기 상태에서 재생 버튼을 누르면 첫 곡을 로드하고 재생
-    if (audio.src === "" || audio.src === window.location.href) { // src가 비었거나 현재 페이지 URL일 경우
-      load(current);
+    // 오디오가 일시 정지 상태이고, 아직 아무 곡도 로드되지 않았다면 (초기 상태)
+    if (!audio.src || audio.src === window.location.href) { // src가 비었거나 현재 페이지 URL일 경우
+      load(current); // 첫 곡을 로드
     }
     play();
   }
@@ -201,9 +208,11 @@ document.addEventListener('DOMContentLoaded', () => {
     load(current);
     play();
   }
-  else { // No repeat, last song ended - 제목을 그대로 유지
+  else { // No repeat, last song ended - 제목을 "재생 중인 곡 없음"으로 되돌립니다.
     pause();
-    // currentTitleEl.textContent는 변경하지 않습니다. (이전 곡 제목 유지)
+    currentTitleEl.textContent = "재생 중인 곡 없음";
+    // 활성 클래스도 제거하여 선택된 곡이 없음을 표시
+    document.querySelectorAll('.playlist li').forEach(li => li.classList.remove('active'));
   }
  };
 
@@ -212,13 +221,13 @@ document.addEventListener('DOMContentLoaded', () => {
   li.textContent = song.title;
   li.onclick = () => {
    current = i;
-   load(current);
+   load(current); // 클릭 시 곡 로드 및 제목 업데이트
    play();
   };
   playlistEl.appendChild(li);
  });
 
- // 초기 로드 시 첫 곡을 로드하지 않고, "재생 중인 곡 없음"을 유지
- // load(current); // 이 줄을 제거하거나 주석 처리합니다.
+ // 초기 로드 시 어떤 곡도 자동 재생하지 않고, "재생 중인 곡 없음" 상태를 유지합니다.
+ // load(current); // 이 줄은 제거하거나 주석 처리해야 합니다.
 
 }); // DOMContentLoaded 닫는 부분
