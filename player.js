@@ -125,10 +125,12 @@ document.addEventListener('DOMContentLoaded', () => {
  const repeatBtn = document.getElementById('repeat');
  const shuffleBtn = document.getElementById('shuffle');
  const playlistEl = document.getElementById('playlist');
+ const currentTitleEl = document.getElementById('current-title'); // 추가: 현재 곡 제목 요소를 가져옵니다.
 
  function load(index) {
   const song = playlist[index];
   audio.src = song.url;
+  currentTitleEl.textContent = song.title; // 추가: 현재 곡 제목 업데이트
   document.querySelectorAll('.playlist li').forEach(li => li.classList.remove('active'));
   if (playlistEl.children[index]) {
     playlistEl.children[index].classList.add('active');
@@ -189,6 +191,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   else { // No repeat, last song ended
     pause();
+    currentTitleEl.textContent = "재생 중인 곡 없음"; // 추가: 재생이 끝나면 기본 텍스트로 돌아감
   }
  };
 
