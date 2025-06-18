@@ -29,6 +29,9 @@
       padding:1rem;
       min-height: 100vh; /* 전체 화면 높이 사용 */
       justify-content: center; /* 수직 중앙 정렬 */
+      overflow-x: hidden; /* 가로 스크롤바 숨김 */
+      /* overflow-y는 기본 auto 또는 hidden으로 설정하지 않아 스크롤이 필요하면 나타나게 둠 */
+      height: 100vh; /* 전체 화면 높이 사용 */
     }
 
     /* 다크 모드 시스템 테마 감지 */
@@ -38,6 +41,11 @@
         background-color: transparent; /* 배경을 투명하게 설정 */
         color: var(--text-dark);
       }
+    }
+
+    /* Webkit 기반 브라우저를 위한 전체 스크롤바 숨김 */
+    body::-webkit-scrollbar {
+        display: none; /* 전체 스크롤바 숨김 */
     }
 
     .player {
