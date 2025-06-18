@@ -5,44 +5,177 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Playlist</title>
   <style>
+    /* 기존 변수 유지 */
     :root {
       --bg-light: #f0f0f0;
       --text-light: #111;
       --bg-dark: #111;
       --text-dark: #f0f0f0;
-      --accent: #1db954;
+      --accent: #1db954; /* 기존 강조색 */
+      --glass-bg-light: rgba(255, 255, 255, 0.4); /* 라이트 모드 글래스 배경 */
+      --glass-border-light: rgba(255, 255, 255, 0.6); /* 라이트 모드 글래스 테두리 */
+      --glass-shadow-light: rgba(0, 0, 0, 0.1); /* 라이트 모드 글래스 그림자 */
+      --glass-bg-dark: rgba(0, 0, 0, 0.4); /* 다크 모드 글래스 배경 */
+      --glass-border-dark: rgba(255, 255, 255, 0.2); /* 다크 모드 글래스 테두리 */
+      --glass-shadow-dark: rgba(0, 0, 0, 0.4); /* 다크 모드 글래스 그림자 */
     }
+
     body {
       margin:0; font-family:sans-serif;
-      background: var(--bg-light); color: var(--text-light);
+      background: linear-gradient(135deg, #a1c4fd, #c2e9fb); /* 그라데이션 배경 */
+      color: var(--text-light);
       display:flex; flex-direction:column; align-items:center;
       padding:1rem;
+      min-height: 100vh; /* 전체 화면 높이 사용 */
+      justify-content: center; /* 수직 중앙 정렬 */
     }
+
+    /* 다크 모드 시스템 테마 감지 */
     @media (prefers-color-scheme: dark) {
-      body { background: var(--bg-dark); color: var(--text-dark); }
+      body {
+        background: linear-gradient(135deg, #2b5876, #4e4376); /* 다크 모드 그라데이션 배경 */
+        color: var(--text-dark);
+      }
     }
-    .player{ width:100%; max-width:400px;}
-    .controls{display:flex;justify-content:space-between;margin:.5rem 0;}
-    button{background:none;border:none;cursor:pointer;font-size:1.5rem;color:inherit;}
-    .playlist{list-style:none;padding:0;max-height:200px;overflow-y:auto;width:100%;}
-    .playlist li{padding:.5rem;cursor:pointer;}
-    .playlist li.active{background:var(--accent);color:#fff;}
+
+    .player {
+      width:100%;
+      max-width:400px;
+      padding: 1.5rem;
+      border-radius: 15px;
+      backdrop-filter: blur(10px); /* 글래스 모피즘 효과 */
+      -webkit-backdrop-filter: blur(10px); /* Safari 지원 */
+      border: 1px solid var(--glass-border-light);
+      background-color: var(--glass-bg-light);
+      box-shadow: 0 8px 32px 0 var(--glass-shadow-light);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* 다크 모드 글래스 모피즘 스타일 */
+    @media (prefers-color-scheme: dark) {
+      .player {
+        border: 1px solid var(--glass-border-dark);
+        background-color: var(--glass-bg-dark);
+        box-shadow: 0 8px 32px 0 var(--glass-shadow-dark);
+      }
+    }
+
+    .controls {
+      display:flex;
+      justify-content:space-between;
+      margin:.5rem 0;
+      width: 100%;
+      max-width: 250px; /* 컨트롤 버튼 너비 제한 */
+    }
+
+    button {
+      background:none;
+      border:none;
+      cursor:pointer;
+      font-size:1.8rem; /* 버튼 아이콘 크기 키움 */
+      color:inherit; /* 부모 요소의 색상 상속 */
+      transition: transform 0.2s ease-in-out; /* 호버 효과 */
+    }
+
+    button:hover {
+      transform: scale(1.1);
+    }
+
+    .playlist {
+      list-style:none;
+      padding:0;
+      max-height:300px; /* 플레이리스트 높이 증가 */
+      overflow-y:auto;
+      width:100%;
+      margin-top: 1rem;
+      border-radius: 10px;
+      /* 플레이리스트 내부도 글래스 모피즘 적용 */
+      backdrop-filter: blur(5px);
+      -webkit-backdrop-filter: blur(5px);
+      border: 1px solid var(--glass-border-light);
+      background-color: var(--glass-bg-light);
+      box-shadow: 0 4px 16px 0 var(--glass-shadow-light);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .playlist {
+        border: 1px solid var(--glass-border-dark);
+        background-color: var(--glass-bg-dark);
+        box-shadow: 0 4px 16px 0 var(--glass-shadow-dark);
+      }
+    }
+
+    .playlist li {
+      padding: .8rem 1rem; /* 패딩 증가 */
+      cursor:pointer;
+      transition: background-color 0.2s ease-in-out;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2); /* 구분선 추가 */
+    }
+
+    .playlist li:last-child {
+      border-bottom: none; /* 마지막 항목 구분선 제거 */
+    }
+
+    .playlist li:hover {
+      background-color: rgba(0, 0, 0, 0.1); /* 호버 배경색 투명도 조정 */
+    }
+
+    .playlist li.active {
+      background-color: var(--accent);
+      color: white; /* 활성 항목 텍스트 색상 */
+      font-weight: bold;
+    }
+
+    /* 스크롤바 디자인 (Webkit 브라우저) */
+    .playlist::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .playlist::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+    }
+
+    .playlist::-webkit-scrollbar-thumb {
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 10px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .playlist::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.1);
+      }
+      .playlist::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.3);
+      }
+    }
+
+    .current-title {
+      font-size: 1.3rem; /* 현재 곡 제목 크기 */
+      font-weight: bold;
+      margin-bottom: 1rem;
+      text-align: center;
+      width: 100%;
+      word-break: break-word; /* 긴 제목 처리 */
+    }
   </style>
 </head>
 <body>
   <div class="player">
-    <audio id="audio"></audio>
+    <h2 class="current-title" id="current-title">재생 중인 곡 없음</h2>
+    <audio id="audio" controls autoplay style="width: 100%;"></audio>
     <div class="controls">
-      <button id="prev">⏮</button>
+      <button id="prev">⏮️</button>
       <button id="play">▶️</button>
-      <button id="next">⏭</button>
-    </div>
-    <div class="controls">
-      <button id="shuffle" style="opacity:.5">🔀</button>
+      <button id="next">⏭️</button>
       <button id="repeat">🔁</button>
+      <button id="shuffle">🔀</button>
     </div>
-    <ul id="playlist" class="playlist"></ul>
+    <ul class="playlist" id="playlist"></ul>
   </div>
 
-  <script src="player.js"></script> </body>
+  <script src="player.js"></script>
+</body>
 </html>
