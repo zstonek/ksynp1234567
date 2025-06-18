@@ -115,7 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
   { title: "소중한 이 순간", url: "https://akamd1.jw-cdn.org/sg2/p/9246cb/1/o/osg_KO_604.mp3" }
  ];
 
- let current = 0;
+ let current = -1; // 초기에는 아무 곡도 선택되지 않은 상태를 나타내기 위해 -1로 설정
  let repeatMode = 0; // 0: no repeat, 1: repeat all, 2: repeat one
  let shuffle = false;
  const audio = document.getElementById('audio');
@@ -130,8 +130,21 @@ document.addEventListener('DOMContentLoaded', () => {
  // 초기 로드 시 "재생 중인 곡 없음"을 설정합니다.
  currentTitleEl.textContent = "재생 중인 곡 없음";
 
+ // 오디오 재생 관련 상태를 추적하는 변수 (Chrome/Notion 호환성을 위해)
+ let isPlaying = false;
+
 
  function load(index) {
+  if (index < 0 || index >= playlist.length) {
+    // 유효하지 않은 인덱스인 경우 처리
+    audio.src = '';
+    currentTitleEl.textContent = "재생 중인 곡 없음";
+    document.querySelectorAll('.playlist li').forEach(li => li.classList.remove('active'));
+    pause(); // 재생 중이었다면 일시정지
+    current = -1; // 현재 곡 인덱스를 -1로 재설정
+    return;
+  }
+
   const song = playlist[index];
   audio.src = song.url;
   currentTitleEl.textContent = song.title; // 현재 곡 제목 업데이트
@@ -139,39 +152,56 @@ document.addEventListener('DOMContentLoaded', () => {
   if (playlistEl.children[index]) {
     playlistEl.children[index].classList.add('active');
   }
+  current = index; // 현재 재생 중인 곡의 인덱스를 업데이트
  }
 
  function play() {
-  audio.play();
-  playBtn.textContent = '⏸️';
-  // 재생 시작 시 현재 곡 제목으로 업데이트 (선택 버튼을 눌러 재생할 때)
-  if (audio.src) { // audio.src가 비어있지 않다면 (즉, 곡이 로드되었다면)
-      const currentSongIndex = playlist.findIndex(song => audio.src.includes(song.url));
-      if (currentSongIndex !== -1) {
-          currentTitleEl.textContent = playlist[currentSongIndex].title;
-      }
+  if (audio.src) { // audio.src가 설정되어 있을 때만 재생 시도
+    audio.play()
+      .then(() => {
+        isPlaying = true;
+        playBtn.textContent = '⏸️';
+        if (current !== -1) { // 현재 곡이 선택된 상태라면 제목 업데이트
+            currentTitleEl.textContent = playlist[current].title;
+        }
+      })
+      .catch(error => {
+        // 자동 재생이 차단되었을 때 (Chrome, Notion 등)
+        console.warn("Autoplay was prevented. User interaction is required.", error);
+        isPlaying = false;
+        playBtn.textContent = '▶️';
+        // "재생 중인 곡 없음" 상태로 유지 (자동 재생 실패 시)
+        // currentTitleEl.textContent는 현재 재생 중인 곡이 없으므로 "재생 중인 곡 없음"이거나, 이전 곡 제목이거나 할 것
+        // 사용자가 다시 재생 버튼을 누르도록 유도
+      });
+  } else {
+      // 재생할 곡이 없으면 "재생 중인 곡 없음" 상태 유지
+      currentTitleEl.textContent = "재생 중인 곡 없음";
+      pause(); // 재생 버튼을 눌렀지만 재생할 곡이 없을 때
   }
  }
 
  function pause() {
   audio.pause();
+  isPlaying = false;
   playBtn.textContent = '▶️';
  }
 
  playBtn.onclick = () => {
-  if (audio.paused) {
-    // 오디오가 일시 정지 상태이고, 아직 아무 곡도 로드되지 않았다면 (초기 상태)
-    if (!audio.src || audio.src === window.location.href) { // src가 비었거나 현재 페이지 URL일 경우
-      load(current); // 첫 곡을 로드
+  if (isPlaying) { // 현재 재생 중이라면 일시정지
+    pause();
+  } else { // 현재 일시정지 상태라면 재생 시도
+    if (current === -1) { // 아직 아무 곡도 선택되지 않았다면
+      current = 0; // 첫 번째 곡을 선택 (또는 원하는 초기 곡)
+      load(current);
     }
     play();
-  }
-  else {
-    pause();
   }
  };
 
  nextBtn.onclick = () => {
+  if (playlist.length === 0) return; // 플레이리스트가 비어있으면 아무것도 하지 않음
+
   if (shuffle) current = Math.floor(Math.random() * playlist.length);
   else current = (current + 1) % playlist.length;
   load(current);
@@ -179,6 +209,8 @@ document.addEventListener('DOMContentLoaded', () => {
  };
 
  prevBtn.onclick = () => {
+  if (playlist.length === 0) return; // 플레이리스트가 비어있으면 아무것도 하지 않음
+
   if (shuffle) current = Math.floor(Math.random() * playlist.length);
   else current = (current - 1 + playlist.length) % playlist.length;
   load(current);
@@ -195,24 +227,25 @@ document.addEventListener('DOMContentLoaded', () => {
   shuffleBtn.style.opacity = shuffle ? '1' : '.5';
  };
 
+ // 재생이 끝나면 호출되는 이벤트 핸들러
  audio.onended = () => {
   if (repeatMode === 2) { // Repeat one
-    load(current);
+    load(current); // 현재 곡 다시 로드
     play();
   } else if (shuffle) {
     current = Math.floor(Math.random() * playlist.length);
     load(current);
     play();
-  } else if (repeatMode === 1 || current < playlist.length - 1) { // Repeat all or not last song
+  } else if (repeatMode === 1) { // Repeat all
     current = (current + 1) % playlist.length;
     load(current);
     play();
   }
-  else { // No repeat, last song ended - 제목을 "재생 중인 곡 없음"으로 되돌립니다.
-    pause();
-    currentTitleEl.textContent = "재생 중인 곡 없음";
-    // 활성 클래스도 제거하여 선택된 곡이 없음을 표시
-    document.querySelectorAll('.playlist li').forEach(li => li.classList.remove('active'));
+  else { // No repeat and last song ended
+    pause(); // 일시정지
+    currentTitleEl.textContent = "재생 중인 곡 없음"; // 제목을 "재생 중인 곡 없음"으로 되돌립니다.
+    document.querySelectorAll('.playlist li').forEach(li => li.classList.remove('active')); // 활성 클래스 제거
+    current = -1; // 현재 곡 인덱스 초기화
   }
  };
 
@@ -220,14 +253,32 @@ document.addEventListener('DOMContentLoaded', () => {
   const li = document.createElement('li');
   li.textContent = song.title;
   li.onclick = () => {
-   current = i;
+   current = i; // 클릭된 곡으로 현재 인덱스 업데이트
    load(current); // 클릭 시 곡 로드 및 제목 업데이트
-   play();
+   play(); // 즉시 재생
   };
   playlistEl.appendChild(li);
  });
 
- // 초기 로드 시 어떤 곡도 자동 재생하지 않고, "재생 중인 곡 없음" 상태를 유지합니다.
- // load(current); // 이 줄은 제거하거나 주석 처리해야 합니다.
+ // 오디오가 일시정지될 때 (사용자가 직접 정지시키거나 브라우저 정책으로 인해)
+ audio.onpause = () => {
+    if (!audio.ended) { // 곡이 끝난 것이 아니라면 (사용자가 정지한 경우 등)
+        isPlaying = false;
+        playBtn.textContent = '▶️';
+    }
+ };
+
+ // 오디오가 재생될 때
+ audio.onplay = () => {
+    isPlaying = true;
+    playBtn.textContent = '⏸️';
+    if (current !== -1) {
+        currentTitleEl.textContent = playlist[current].title;
+    }
+ };
+
+ // 초기 로드 시 "재생 중인 곡 없음"을 확실히 표시하고, 아무것도 재생하지 않음
+ // current = -1; // 이미 위에서 설정됨
+ // currentTitleEl.textContent = "재생 중인 곡 없음"; // 이미 위에서 설정됨
 
 }); // DOMContentLoaded 닫는 부분
