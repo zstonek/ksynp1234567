@@ -30,7 +30,7 @@
       min-height: 100vh; /* 전체 화면 높이 사용 */
       justify-content: center; /* 수직 중앙 정렬 */
       overflow-x: hidden; /* 가로 스크롤바 숨김 */
-      /* overflow-y는 기본 auto 또는 hidden으로 설정하지 않아 스크롤이 필요하면 나타나게 둠 */
+      overflow-y: hidden; /* 세로 스크롤바 숨김 */
       height: 100vh; /* 전체 화면 높이 사용 */
     }
 
@@ -43,7 +43,7 @@
       }
     }
 
-    /* Webkit 기반 브라우저를 위한 전체 스크롤바 숨김 */
+    /* Webkit 기반 브라우저를 위한 전체 스크롤바 숨김 (Firefox 등 다른 브라우저는 overflow: hidden으로 제어됨) */
     body::-webkit-scrollbar {
         display: none; /* 전체 스크롤바 숨김 */
     }
@@ -97,7 +97,7 @@
       list-style:none;
       padding:0;
       max-height:500px; /* 플레이리스트 높이 증가 (기존 300px에서 500px로 변경) */
-      overflow-y:auto;
+      overflow-y:auto; /* 플레이리스트 스크롤바는 유지 */
       width:100%;
       margin-top: 1rem;
       border-radius: 10px;
